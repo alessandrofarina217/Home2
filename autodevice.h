@@ -6,11 +6,11 @@
 class AutoDevice : public Device {
 public:
     void powerOn() override {
-        // Implementation for AutoDevice
+        //implementazione per AutoDevice
     }
 
     void powerOff() override {
-        // Implementation for AutoDevice
+        //implementazione per AutoDevice
     }
 };
 
