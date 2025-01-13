@@ -18,7 +18,7 @@ public:
     virtual bool execute(const std::vector<std::string>& args) = 0;
 };
 
-class setCommand : public Command                 //classe per comando SET
+class SetCommand : public Command                 //classe per comando SET
 {
 public:
     bool execute(const std::vector<std::string>& args) override
@@ -38,7 +38,7 @@ public:
 
 };
 
-class rmCommand : public Command                //classe per comando REMOVE
+class RmCommand : public Command                //classe per comando REMOVE
 {
 public:
     bool execute(const std::vector<std::string>& args) override
@@ -52,7 +52,7 @@ public:
     }
 };
 
-class showCommand : public Command             //classe per comando SHOW
+class ShowCommand : public Command             //classe per comando SHOW
 {
 public:
     bool execute(const std::vector<std::string>& args) override 
@@ -64,7 +64,7 @@ public:
 
 };
 
-class resetCommand : public Command         //classe per comando RESET
+class ResetCommand : public Command         //classe per comando RESET
 {
 public:
     bool execute(const std::vector<std::string>& args) override 
@@ -87,7 +87,11 @@ class CommandParser
 {
 private:
 
-    std::map<std::string, std::unique_ptr<Command>> commands;        //mappa dei nomi dei comandi
+    std::unordered_map<std::string, std::unique_ptr<Command>> commands;        //mappa dei nomi dei comandi
+    commandMap["set"] = std::unique_ptr<Command>(new SetCommand());
+    commandMap["reset"] = std::unique_ptr<Command>(new ResetCommand());
+    commandMap["rm"] = std::unique_ptr<Command>(new RmCommand());
+    commandMap["show"] = std::unique_ptr<Command>(new ShowCommand());
     
     
     std::vector<std::string> tokenize(const std::string& input)     //funzione per creare i token
@@ -104,13 +108,6 @@ private:
     }
 
 public:
-    //registrazione dei comandi                                                                    DA CONVERTIRE IN SET FISSO
-    void registerCommand(const std::string& name, std::unique_ptr<Command> cmd) 
-    {
-        commands[name] = std::move(cmd);
-    }
-    
-    // Process user input
     bool processInput(const std::string& input) 
     {
         auto tokens = tokenize(input);
@@ -142,18 +139,9 @@ public:
 int main() {
     CommandParser parser;
     
-    // Register commands using our makeUnique helper instead of std::make_unique
-    parser.registerCommand("echo", makeUnique<EchoCommand>());
-    parser.registerCommand("calc", makeUnique<CalculateCommand>());
-    
-    parser.registerCommand("set", makeUnique<setCommand>());
-    parser.registerCommand("rm", makeUnique<rmCommand>());
-    parser.registerCommand("show", makeUnique<showCommand>());
-    parser.registerCommand("reset", makeUnique<resetCommand>());
-    
     std::string input;
     
-    std::cout << "Welcome to the terminal! Type 'exit' to quit.\n";
+    std::cout << "Benvenuti in HomeManager.\n";
     
     while (true) {
         std::cout << "> ";
