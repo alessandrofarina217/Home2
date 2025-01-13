@@ -15,13 +15,17 @@ class Command         //classe di base per ciascun comando
 {
 public:
     virtual ~Command() = default;
-    virtual bool execute(const std::vector<std::string>& args) = 0;
+    virtual void execute(const std::vector<std::string>& args) = 0;
+    void printInvalid() const
+    {
+        cout<<"Comando inserito non valido, Riprovare.\n";
+    }
 };
 
 class SetCommand : public Command                 //classe per comando SET
 {
 public:
-    bool execute(const std::vector<std::string>& args) override
+    void execute(const std::vector<std::string>& args) override
     {
         if(args.size() > 3) return false;                                               //l'input non sarà mai corretto 
         else if(args[0] == "time" && args.size() == 2) dm.setTime(args);                //eventualmente si potrebbe cambiare con un set
@@ -30,10 +34,7 @@ public:
             if(args[1] == "on" || args[1] == "off") dm.setPower(args);
             else dm.setTimer(args);
         }
-        else return false;
-
-        return true;
-        
+        else printInvalid();
     }
 
 };
@@ -41,25 +42,25 @@ public:
 class RmCommand : public Command                //classe per comando REMOVE
 {
 public:
-    bool execute(const std::vector<std::string>& args) override
+    void execute(const std::vector<std::string>& args) override
     {
         if(dm.checkList(args)) 
         {
             dm.removeTimer(args);                            //se il device è come argomento, rimuove il timer associato
-            return true;
+            return;
         }
-        else cout<<"comando inserito non valido."<<endl;    //stampa errore input
+        else printInvalid();    //stampa errore input
     }
 };
 
 class ShowCommand : public Command             //classe per comando SHOW
 {
 public:
-    bool execute(const std::vector<std::string>& args) override 
+    void execute(const std::vector<std::string>& args) override 
     {
         if(args.empty()) dm.showConsumption()                        //chiama showConsumption
         else if (dm.checkList(args)) dm.printDeviceConsumption();    //chiama printDeviceConsumption
-        else cout<<"comando inserito non valido."<<endl;             //gestione errore in input
+        else printInvalid();            //gestione errore in input
     }
 
 };
@@ -67,7 +68,7 @@ public:
 class ResetCommand : public Command         //classe per comando RESET
 {
 public:
-    bool execute(const std::vector<std::string>& args) override 
+    void execute(const std::vector<std::string>& args) override 
     {
         if(args.size() == 1)
         {
@@ -108,13 +109,14 @@ private:
     }
 
 public:
-    bool processInput(const std::string& input) 
+    void processInput(const std::string& input) 
     {
         auto tokens = tokenize(input);
         
         if (tokens.empty()) 
         {
-            return true;
+            cout<<"Inserire un comando!\n";
+            return;
         }
         
         std::string commandName = tokens[0];
@@ -123,38 +125,49 @@ public:
         auto it = commands.find(commandName);
         if (it == commands.end()) 
         {
-            std::cout << "Il comando inserito non e' valido. " << commandName << std::endl;
-            return false;
+            std::cout << "Il comando inserito non e' valido. "<<commandName<<std::endl;
+            return;
         }
         
         //rimozione del comando dal vettore dei token
         std::vector<std::string> args(tokens.begin() + 1, tokens.end());
         
         //passaggio al secondo livello (controllo parametri)
-        return it->second->execute(args);
+        it->second->execute(args);
     }
     
 };
 
-int main() {
+int main() 
+{
     CommandParser parser;
+    DeviceManager dm;
+    TimeManager tm;
+    
     
     std::string input;
     
-    std::cout << "Benvenuti in HomeManager.\n";
+    std::cout<<"Benvenuti in HomeManager.\n";
+    std::cout<<"Per favore, utilizzare le virgolette \"" <<" per indicare i nomi dei dispositivi.\n";            //CONTROLLARE input
     
-    while (true) {
-        std::cout << "> ";
+    do
+    {
+        std::cout << "comando: > ";
         std::getline(std::cin, input);
         
-        if (input == "exit") {
+        if (input == "exit") 
+        {
             break;
-        } else if (input == "help") {
+        }
+        else if (input == "help") 
+        {
             parser.showHelp();
-        } else {
+        } 
+        else 
+        {
             parser.processInput(input);
         }
-    }
+    } while(time<=end);
     
     return 0;
 }
