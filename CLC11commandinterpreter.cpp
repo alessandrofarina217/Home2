@@ -18,21 +18,78 @@ public:
 };
 
 // Example command implementation
-class EchoCommand : public Command {
+class EchoCommand : public Command 
+{
 public:
-    bool execute(const std::vector<std::string>& args) override {
-        for (size_t i = 0; i < args.size(); ++i) {
-            std::cout << args[i];
-            if (i < args.size() - 1) std::cout << " ";
-        }
-        std::cout << std::endl;
-        return true;
+    bool execute(const std::vector<std::string>& args) override 
+    {
+        
     }
     
     std::string getUsage() const override {
         return "echo [message...]";
     }
 };
+
+class setCommand : public Command
+{
+public:
+    bool execute(const std::vector<std::string>& args) override
+    {
+        if(args.size() > 3) return false;                                               //l'input non sarà mai corretto 
+        else if(args[0] == "time" && args.size() == 2) dm.setTime(args);                //eventualmente si può cambiare con il set
+        else if (dm.checkList(args) && args.size == 2)                                  //controllo nella tabella dei dispositivi
+        {
+            if(args[1] == "on" || args[1] == "off") dm.setPower(args);
+            else dm.setTimer(args);
+        }
+        else return false;
+
+        return true;
+        
+    }
+
+};
+
+class rmCommand : public Command
+{
+public:
+    bool execute(const std::vector<std::string>& args) override
+    {
+        if(dm.checkList(args)) 
+        {
+            dm.removeTimer(args);                            //se il device è come argomento, rimuove il timer associato
+            return true;
+        }
+        else return false;
+    }
+};
+
+class showCommand : public Command 
+{
+public:
+    bool execute(const std::vector<std::string>& args) override 
+    {
+        if(args.empty()) dm.showConsumption()
+        else if (dm.checkList(args)) dm.printDeviceConsumption();
+        else cout<<"comando inserito non valido."<<endl;
+    }
+
+};
+
+class resetCommand : public Command 
+{
+public:
+    bool execute(const std::vector<std::string>& args) override 
+    {
+        if(args.size() == 1)
+        {
+            if(args[0] == "time") dm.resetTime();                                        //chiama resetTime
+            else if(args[0] == "timers") dm.resetTimers();                               //chiama resetTimers
+            else dm.resetAll();                                                          //chiama resetAll
+        }
+    }
+}; 
 
 // Helper function to replace std::make_unique (C++14)
 template<typename T, typename... Args>
@@ -159,6 +216,11 @@ int main() {
     // Register commands using our makeUnique helper instead of std::make_unique
     parser.registerCommand("echo", makeUnique<EchoCommand>());
     parser.registerCommand("calc", makeUnique<CalculateCommand>());
+    
+    parser.registerCommand("set", makeUnique<setCommand>());
+    parser.registerCommand("rm", makeUnique<rmCommand>());
+    parser.registerCommand("show", makeUnique<showCommand>());
+    parser.registerCommand("reset", makeUnique<resetCommand>());
     
     std::string input;
     
