@@ -1,3 +1,5 @@
+//file scritto da Alessandro Farina
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -9,35 +11,20 @@
 // Forward declaration
 class CommandParser;
 
-// Base class for all commands
-class Command {
+class Command         //classe di base per ciascun comando
+{
 public:
     virtual ~Command() = default;
     virtual bool execute(const std::vector<std::string>& args) = 0;
-    virtual std::string getUsage() const = 0;
 };
 
-// Example command implementation
-class EchoCommand : public Command 
-{
-public:
-    bool execute(const std::vector<std::string>& args) override 
-    {
-        
-    }
-    
-    std::string getUsage() const override {
-        return "echo [message...]";
-    }
-};
-
-class setCommand : public Command
+class setCommand : public Command                 //classe per comando SET
 {
 public:
     bool execute(const std::vector<std::string>& args) override
     {
         if(args.size() > 3) return false;                                               //l'input non sarà mai corretto 
-        else if(args[0] == "time" && args.size() == 2) dm.setTime(args);                //eventualmente si può cambiare con il set
+        else if(args[0] == "time" && args.size() == 2) dm.setTime(args);                //eventualmente si potrebbe cambiare con un set
         else if (dm.checkList(args) && args.size == 2)                                  //controllo nella tabella dei dispositivi
         {
             if(args[1] == "on" || args[1] == "off") dm.setPower(args);
@@ -51,7 +38,7 @@ public:
 
 };
 
-class rmCommand : public Command
+class rmCommand : public Command                //classe per comando REMOVE
 {
 public:
     bool execute(const std::vector<std::string>& args) override
@@ -61,23 +48,23 @@ public:
             dm.removeTimer(args);                            //se il device è come argomento, rimuove il timer associato
             return true;
         }
-        else return false;
+        else cout<<"comando inserito non valido."<<endl;    //stampa errore input
     }
 };
 
-class showCommand : public Command 
+class showCommand : public Command             //classe per comando SHOW
 {
 public:
     bool execute(const std::vector<std::string>& args) override 
     {
-        if(args.empty()) dm.showConsumption()
-        else if (dm.checkList(args)) dm.printDeviceConsumption();
-        else cout<<"comando inserito non valido."<<endl;
+        if(args.empty()) dm.showConsumption()                        //chiama showConsumption
+        else if (dm.checkList(args)) dm.printDeviceConsumption();    //chiama printDeviceConsumption
+        else cout<<"comando inserito non valido."<<endl;             //gestione errore in input
     }
 
 };
 
-class resetCommand : public Command 
+class resetCommand : public Command         //classe per comando RESET
 {
 public:
     bool execute(const std::vector<std::string>& args) override 
@@ -91,123 +78,65 @@ public:
     }
 }; 
 
-// Helper function to replace std::make_unique (C++14)
-template<typename T, typename... Args>
+template<typename T, typename... Args>                                        //helper function per utilizzare make unique anche al di fuori di c++14
 std::unique_ptr<T> makeUnique(Args&&... args) {
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
-class CommandParser {
+class CommandParser 
+{
 private:
-    // Map of command names to command objects
-    std::map<std::string, std::unique_ptr<Command>> commands;
+
+    std::map<std::string, std::unique_ptr<Command>> commands;        //mappa dei nomi dei comandi
     
-    // Split input string into tokens
-    std::vector<std::string> tokenize(const std::string& input) {
+    
+    std::vector<std::string> tokenize(const std::string& input)     //funzione per creare i token
+    {
         std::vector<std::string> tokens;
-        std::stringstream ss(input);
+        std::stringstream stream(input);
         std::string token;
         
-        while (ss >> token) {
-            // Handle quoted strings
-            if (!token.empty() && token.front() == '"' && token.back() != '"') {
-                std::string quoted = token;
-                while (ss >> token) {
-                    quoted += " " + token;
-                    if (!token.empty() && token.back() == '"') break;
-                }
-                // Remove quotes and add to tokens
-                if (quoted.length() >= 2) {
-                    quoted = quoted.substr(1, quoted.length() - 2);
-                    tokens.push_back(quoted);
-                }
-            } else if (!token.empty() && token.front() == '"' && token.back() == '"') {
-                // Handle single quoted token
-                token = token.substr(1, token.length() - 2);
+        while (stream >> token) 
+        {
                 tokens.push_back(token);
-            } else {
-                tokens.push_back(token);
-            }
         }
         return tokens;
     }
 
 public:
-    // Register a new command
-    void registerCommand(const std::string& name, std::unique_ptr<Command> cmd) {
+    //registrazione dei comandi                                                                    DA CONVERTIRE IN SET FISSO
+    void registerCommand(const std::string& name, std::unique_ptr<Command> cmd) 
+    {
         commands[name] = std::move(cmd);
     }
     
     // Process user input
-    bool processInput(const std::string& input) {
+    bool processInput(const std::string& input) 
+    {
         auto tokens = tokenize(input);
         
-        if (tokens.empty()) {
+        if (tokens.empty()) 
+        {
             return true;
         }
         
         std::string commandName = tokens[0];
-        // Convert command to lowercase for case-insensitive comparison
-        std::transform(commandName.begin(), commandName.end(), 
-                      commandName.begin(), ::tolower);
         
         // Check if command exists
         auto it = commands.find(commandName);
-        if (it == commands.end()) {
-            std::cout << "Unknown command: " << commandName << std::endl;
+        if (it == commands.end()) 
+        {
+            std::cout << "Il comando inserito non e' valido. " << commandName << std::endl;
             return false;
         }
         
-        // Remove command name from arguments
+        //rimozione del comando dal vettore dei token
         std::vector<std::string> args(tokens.begin() + 1, tokens.end());
         
-        // Execute command
+        //passaggio al secondo livello (controllo parametri)
         return it->second->execute(args);
     }
     
-    // Display available commands
-    void showHelp() const {
-        std::cout << "Available commands:\n";
-        for (const auto& cmd : commands) {
-            std::cout << cmd.first << " - Usage: " << cmd.second->getUsage() << std::endl;
-        }
-    }
-};
-
-// Example calculator command
-class CalculateCommand : public Command {
-public:
-    bool execute(const std::vector<std::string>& args) override {
-        if (args.size() < 3) {
-            std::cout << "Error: Not enough arguments for calculation\n";
-            std::cout << "Usage: " << getUsage() << std::endl;
-            return false;
-        }
-
-        std::string operation = args[0];
-        
-        try {
-            double result = std::stod(args[1]);
-            
-            if (operation == "add") {
-                for (size_t i = 2; i < args.size(); i++) {
-                    result += std::stod(args[i]);
-                }
-                std::cout << "Result: " << result << std::endl;
-                return true;
-            } else {
-                std::cout << "Unknown operation: " << operation << std::endl;
-                return false;
-            }
-        } catch (const std::invalid_argument&) {
-            std::cout << "Error: Please provide valid numbers\n";
-            return false;
-        }
-    }
-    
-    std::string getUsage() const override {
-        return "calc add <number1> <number2> [more numbers...]";
-    }
 };
 
 int main() {
