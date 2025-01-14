@@ -13,21 +13,27 @@ class CommandParser;
 
 class Command         //classe di base per ciascun comando
 {
-public:
-    virtual ~Command() = default;
-    virtual void execute(const std::vector<std::string>& args) = 0;
-    void printInvalid() const
+  void printInvalid() const
     {
         cout<<"Comando inserito non valido, Riprovare.\n";
     }
+    virtual int checkArgs(const std::vector<std::string>& args) = 0;
+
+public:
+    virtual ~Command() = default;
+    virtual void execute(const std::vector<std::string>& args) = 0;
 };
 
 class SetCommand : public Command                 //classe per comando SET
 {
+    int checkArgs(const std::vector<std::string>& args) override 
+    {
+        
+    }
 public:
     void execute(const std::vector<std::string>& args) override
     {
-        if(args.size() > 3) return false;                                               //l'input non sarà mai corretto 
+        if(args.size() > 3) return;                                               //l'input non sarà mai corretto 
         else if(args[0] == "time" && args.size() == 2) dm.setTime(args);                //eventualmente si potrebbe cambiare con un set
         else if (dm.checkList(args) && args.size == 2)                                  //controllo nella tabella dei dispositivi
         {
@@ -39,43 +45,85 @@ public:
 
 };
 
-class RmCommand : public Command                //classe per comando REMOVE
+class RmCommand : public Command                //classe per comando REMOVE        MODIFICATA
 {
+    int checkArgs(const std::vector<std::string>& args) override            //member function per verificare gli argomenti e segnalare la funzione corretta da chiamare
+    {
+        if(dm.checkList(args))    return 1;
+        else return -1;
+    }
 public:
     void execute(const std::vector<std::string>& args) override
     {
-        if(dm.checkList(args)) 
-        {
-            dm.removeTimer(args);                            //se il device è come argomento, rimuove il timer associato
-            return;
-        }
-        else printInvalid();    //stampa errore input
+        switch(checkArgs(args))
+            {
+                case 1:
+                    dm.removeTimer(args);
+                    break;
+                case -1:                                            //caso errore
+                    printInvalid();
+                    break;
+            }
     }
 };
 
-class ShowCommand : public Command             //classe per comando SHOW
+class ShowCommand : public Command             //classe per comando SHOW        MODIFICATA
 {
+    int checkArgs(const std::vector<std::string>& args) override 
+    {
+        if(args.empty()) return 1;
+        if(dm:checkList(args)) return 2;
+        else return -1;
+    }
 public:
     void execute(const std::vector<std::string>& args) override 
     {
-        if(args.empty()) dm.showConsumption()                        //chiama showConsumption
-        else if (dm.checkList(args)) dm.printDeviceConsumption();    //chiama printDeviceConsumption
-        else printInvalid();            //gestione errore in input
+        switch(checkArgs(args))
+            {
+                case 1:
+                    dm.showConsumption();
+                    break;
+                case 2:
+                    dm.printDeviceConsumption();
+                    break;
+                case -1;
+                    printInvalid();
+                    break;
+            }
     }
 
 };
 
-class ResetCommand : public Command         //classe per comando RESET
+class ResetCommand : public Command         //classe per comando RESET            MODIFICATA
 {
+    int checkArgs(const std::vector<std::string>& args) override 
+    {
+        if(args.size==1)
+        {
+            if(args[0]=="time") return 1;
+            if(args[0]=="timers") return 2;
+            if(args[0]=="all") return 3;
+            else return -1;
+        }
+    }
 public:
     void execute(const std::vector<std::string>& args) override 
     {
-        if(args.size() == 1)
-        {
-            if(args[0] == "time") dm.resetTime();                                        //chiama resetTime
-            else if(args[0] == "timers") dm.resetTimers();                               //chiama resetTimers
-            else dm.resetAll();                                                          //chiama resetAll
-        }
+        switch(checkArgs(args))
+            {
+                case 1:
+                    dm.resetTime();
+                    break;
+                case 2:
+                    dm.resetTimers();
+                    break;
+                case 3:
+                    dm.resetAll();
+                    break;
+                case -1:
+                    printInvalid();
+                    break;
+            }
     }
 }; 
 
@@ -124,7 +172,7 @@ public:
         auto it = commands.find(commandName);
         if (it == commands.end()) 
         {
-            std::cout << "Il comando inserito non e' valido. "<<commandName<<std::endl;
+            std::cout << "Il comando inserito non e' valido: "<<commandName<<std::endl;
             return;
         }
         
