@@ -24,23 +24,37 @@ public:
     virtual void execute(const std::vector<std::string>& args) = 0;
 };
 
-class SetCommand : public Command                 //classe per comando SET
+class SetCommand : public Command                 //classe per comando SET    MODIFICATA
 {
     int checkArgs(const std::vector<std::string>& args) override 
     {
-        
+        if(args.size() > 3) return -1;
+        if(args[0] == "time" && args.size() == 2) return 1;
+        if(dm.checkList(args) && args.size == 2)
+        {
+            if(args[1]=="on" || args[1]=="off") return 2;
+            else return 3;
+        }
+        else return -1;
     }
 public:
     void execute(const std::vector<std::string>& args) override
     {
-        if(args.size() > 3) return;                                               //l'input non sarà mai corretto 
-        else if(args[0] == "time" && args.size() == 2) dm.setTime(args);                //eventualmente si potrebbe cambiare con un set
-        else if (dm.checkList(args) && args.size == 2)                                  //controllo nella tabella dei dispositivi
-        {
-            if(args[1] == "on" || args[1] == "off") dm.setPower(args);
-            else dm.setTimer(args);
-        }
-        else printInvalid();
+        switch(checkArgs(args))
+          {
+            case 1:
+              dm.setTime(args);
+              break;
+            case 2:
+              dm.setPower(args);
+              break;
+            case 3:
+              dm.setTimer(args);
+              break;
+            case -1:
+              printInvalid();
+              break;
+          }
     }
 
 };
