@@ -79,11 +79,6 @@ public:
     }
 }; 
 
-template<typename T, typename... Args>                                        //helper function per utilizzare make unique anche al di fuori di c++14
-std::unique_ptr<T> makeUnique(Args&&... args) {
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
-
 class CommandParser 
 {
 private:
