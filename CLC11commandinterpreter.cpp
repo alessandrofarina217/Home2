@@ -139,8 +139,9 @@ private:
         std::vector<std::string> tokens;
         std::stringstream stream(input);
         std::string token;
+        std::regex pat {R"("[^"]*")"}    //definisce la funzione regex da usare.     STARE MOLTO ATTENTI!    DOVREBBE CERCARE UNA SOTTOSEQUENZA CHE INIZI E TERMINI CON LE
         
-        while (stream >> token) 
+        while (stream >> token)                       
         {
                 tokens.push_back(token);
         }
@@ -158,7 +159,7 @@ public:
         
     void processInput(const std::string& input) 
     {
-        auto tokens = tokenize(input);
+        std::vector<std::string> tokens = tokenize(input);
         
         if (tokens.empty()) 
         {
