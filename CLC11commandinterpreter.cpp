@@ -133,20 +133,47 @@ private:
 
     std::unordered_map<std::string, std::unique_ptr<Command>> commands;        //mappa dei nomi dei comandi
     
-    
-    std::vector<std::string> tokenize(const std::string& input)     //funzione per creare i token
+    std::vector<std::string> tokenize(const std::string& input)
+{
+    bool virgolettato = false;
+    int tLength = 0;
+    int sIndex = 0;
+    std::vector<std::string> tokens;
+
+    for (int i = 0; i < input.length(); i++)
     {
-        std::vector<std::string> tokens;
-        std::stringstream stream(input);
-        std::string token;
-        std::regex pat {R"("[^"]*")"}    //definisce la funzione regex da usare.     STARE MOLTO ATTENTI!    DOVREBBE CERCARE UNA SOTTOSEQUENZA CHE INIZI E TERMINI CON LE
-        
-        while (stream >> token)                       
+        if (!virgolettato && input[i] == ' ')  //fuori dalle virgolette spezza allo spazio
         {
-                tokens.push_back(token);
+            if (tLength > 0) 
+            {
+                tokens.push_back(input.substr(sIndex, tLength));
+                tLength = 0;
+            }
+            sIndex = i + 1;
         }
-        return tokens;
+        else if (input[i] == '"')  //gestione delle virgolette
+        {
+            virgolettato = !virgolettato;
+            if (virgolettato) 
+            {
+                sIndex = i + 1;  //inizia dopo l'apertura delle virgolette
+            }
+            else 
+            {
+                tokens.push_back(input.substr(sIndex, i - sIndex));
+                tLength = 0;
+                sIndex = i + 1;
+            }
+        }
+        else tLength++;
     }
+    if (tLength > 0) 
+    {
+        tokens.push_back(input.substr(sIndex, tLength));
+    }
+    return std::move(tokens);
+}
+
 
 public:
     CommandParser()
