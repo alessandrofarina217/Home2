@@ -84,10 +84,6 @@ class CommandParser
 private:
 
     std::unordered_map<std::string, std::unique_ptr<Command>> commands;        //mappa dei nomi dei comandi
-    commandMap["set"] = std::unique_ptr<Command>(new SetCommand());
-    commandMap["reset"] = std::unique_ptr<Command>(new ResetCommand());
-    commandMap["rm"] = std::unique_ptr<Command>(new RmCommand());
-    commandMap["show"] = std::unique_ptr<Command>(new ShowCommand());
     
     
     std::vector<std::string> tokenize(const std::string& input)     //funzione per creare i token
@@ -104,6 +100,14 @@ private:
     }
 
 public:
+    CommandParser()
+    {
+        commands["set"] = std::unique_ptr<Command>(new SetCommand());
+        commands["reset"] = std::unique_ptr<Command>(new ResetCommand());
+        commands["rm"] = std::unique_ptr<Command>(new RmCommand());
+        commands["show"] = std::unique_ptr<Command>(new ShowCommand());
+    }
+        
     void processInput(const std::string& input) 
     {
         auto tokens = tokenize(input);
